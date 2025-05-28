@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession, signIn } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,34 +15,54 @@ type Crop = {
 };
 
 export default function CropsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [crops, setCrops] = useState<Crop[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/crops')
-      .then(res => {
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        return res.json();
-      })
-      .then((data: Crop[]) => setCrops(data))
-      .catch(err => {
-        console.error("Fetch error:", err);
-        setError(err.message || 'Ocurrió un error desconocido');
-      });
-  }, []);
+    if (status === 'unauthenticated') {
+      signIn(undefined, { callbackUrl: '/crops' });
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetch('/api/crops')
+        .then(res => {
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          return res.json();
+        })
+        .then((data: Crop[]) => setCrops(data))
+        .catch(err => {
+          console.error('Fetch error:', err);
+          setError(err.message || 'Ocurrió un error desconocido');
+        });
+    }
+  }, [status]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.07 },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.07 } },
   };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 90 } },
   };
+
+  if (status === 'loading') {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center">
+        <Skeleton className="h-8 w-48" />
+      </main>
+    );
+  }
+
+  if (status !== 'authenticated') {
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-50 to-white">
@@ -62,7 +84,9 @@ export default function CropsPage() {
             {Array.from({ length: 8 }).map((_, idx) => (
               <Card key={idx} className="animate-pulse border border-green-200 rounded-lg">
                 <CardHeader className="p-4">
-                  <CardTitle><Skeleton className="h-6 w-3/4" /></CardTitle>
+                  <CardTitle>
+                    <Skeleton className="h-6 w-3/4" />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <Skeleton className="h-4 w-1/2 mb-2" />
