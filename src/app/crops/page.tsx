@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +14,8 @@ type Crop = {
 };
 
 export default function CropsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  // Only pull `status` since `session` isn’t used anywhere
+  const { status } = useSession();
 
   const [crops, setCrops] = useState<Crop[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +29,12 @@ export default function CropsPage() {
   useEffect(() => {
     if (status === 'authenticated') {
       fetch('/api/crops')
-        .then(res => {
+        .then((res) => {
           if (!res.ok) throw new Error(`Status ${res.status}`);
           return res.json();
         })
         .then((data: Crop[]) => setCrops(data))
-        .catch(err => {
+        .catch((err) => {
           console.error('Fetch error:', err);
           setError(err.message || 'Ocurrió un error desconocido');
         });
@@ -112,7 +111,7 @@ export default function CropsPage() {
             initial="hidden"
             animate="visible"
           >
-            {crops.map(crop => (
+            {crops.map((crop) => (
               <motion.div key={crop.id} variants={itemVariants} className="h-full">
                 <Card className="border border-green-200 bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:border-green-400 hover:scale-[1.03] h-full flex flex-col">
                   <CardHeader className="p-4">

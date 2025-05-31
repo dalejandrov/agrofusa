@@ -27,6 +27,12 @@ const baseInputClassName =
 const passwordInputClassName = `${baseInputClassName} pr-10`
 const labelClassName = 'text-sm font-medium text-gray-700'
 
+// Define the shape of the signup API response
+type SignUpResponse = {
+  errors?: Record<string, string | string[]>
+  message?: string
+}
+
 export default function SignUpPage() {
   const router = useRouter()
 
@@ -60,12 +66,14 @@ export default function SignUpPage() {
       setDocTypesError(null)
       try {
         const res = await fetch('/api/document-types', { signal })
-        if (!res.ok) {          
+        if (!res.ok) {
           let errorMsg = 'Error cargando tipos de documento'
           try {
             const errorData = await res.json()
-            errorMsg = errorData?.message || errorMsg
-          } catch (parseError) {            
+            if (errorData?.message && typeof errorData.message === 'string') {
+              errorMsg = errorData.message
+            }
+          } catch (parseError) {
             console.error('Error parsing error response for doc types:', parseError)
           }
           throw new Error(errorMsg)
@@ -75,15 +83,17 @@ export default function SignUpPage() {
         if (data.length > 0 && !documentTypeId) {
           setDocumentTypeId(data[0].id)
         }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          setDocTypesError(err.message || 'Error inesperado al cargar tipos de documento.')
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          setDocTypesError(err.message)
+        } else if (!(err instanceof Error)) {
+          setDocTypesError('Error inesperado al cargar tipos de documento.')
         }
-      } finally {        
+      } finally {
         if (signal.aborted) {
-            console.log("Fetch aborted for document types.");
+          console.log('Fetch aborted for document types.')
         } else {
-            setLoadingDocTypes(false);
+          setLoadingDocTypes(false)
         }
       }
     }
@@ -91,7 +101,7 @@ export default function SignUpPage() {
     fetchDocTypes()
 
     return () => {
-      controller.abort() 
+      controller.abort()
     }
   }, [documentTypeId])
 
@@ -126,12 +136,14 @@ export default function SignUpPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(signupPayload),
       })
-      const signupData = await signupRes.json()
+      const signupData: SignUpResponse = await signupRes.json()
 
       if (!signupRes.ok) {
         const errorMessages = signupData.errors
           ? Object.values(signupData.errors)
-              .flatMap((fieldErrors: any) => (Array.isArray(fieldErrors) ? fieldErrors : [fieldErrors]))
+              .flatMap((fieldErrors) =>
+                Array.isArray(fieldErrors) ? fieldErrors : [fieldErrors]
+              )
               .join(' ')
           : signupData.message
         throw new Error(errorMessages || 'Error al crear la cuenta.')
@@ -149,24 +161,24 @@ export default function SignUpPage() {
           signInRes.error === 'CredentialsSignin'
             ? 'Cuenta creada, pero hubo un error al iniciar sesión automáticamente. Por favor, intenta iniciar sesión manualmente.'
             : `Error de inicio de sesión: ${signInRes.error}`
-        // Set error, but don't throw, as signup was successful. Or redirect to login with message.
-        // For this example, we'll show the error and let user proceed to login.
         setError(loginErrorMsg)
-        router.push(`/signin?message=${encodeURIComponent(loginErrorMsg)}`) // Redirect to signin with a message
-        return; // Stop further execution in this function
+        router.push(`/signin?message=${encodeURIComponent(loginErrorMsg)}`)
+        return
       }
 
       // 3) Redirect to dashboard on successful login
       router.push('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Ocurrió un error inesperado.')
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Ocurrió un error inesperado.'
+      setError(message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">      
+    <div className="min-h-screen flex flex-col lg:flex-row">
       <motion.div
         className="hidden lg:flex w-full lg:w-1/2 bg-green-600 text-white items-center justify-center p-12"
         initial={{ opacity: 0, x: -50 }}
@@ -215,7 +227,9 @@ export default function SignUpPage() {
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <Label htmlFor="name" className={labelClassName}>Nombre completo</Label>
+                  <Label htmlFor="name" className={labelClassName}>
+                    Nombre completo
+                  </Label>
                   <Input
                     id="name"
                     type="text"
@@ -228,7 +242,9 @@ export default function SignUpPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="email" className={labelClassName}>Email</Label>
+                  <Label htmlFor="email" className={labelClassName}>
+                    Email
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -239,10 +255,12 @@ export default function SignUpPage() {
                     className={baseInputClassName}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="documentTypeId" className={labelClassName}>Tipo de documento</Label>
+                    <Label htmlFor="documentTypeId" className={labelClassName}>
+                      Tipo de documento
+                    </Label>
                     {loadingDocTypes ? (
                       <div className={`${baseInputClassName} flex items-center text-gray-500`}>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando...
@@ -252,11 +270,7 @@ export default function SignUpPage() {
                         {docTypesError}
                       </div>
                     ) : (
-                      <Select
-                        value={documentTypeId}
-                        onValueChange={setDocumentTypeId}
-                        required
-                      >
+                      <Select value={documentTypeId} onValueChange={setDocumentTypeId} required>
                         <SelectTrigger className={`${baseInputClassName} w-full`}>
                           <SelectValue placeholder="Selecciona un tipo" />
                         </SelectTrigger>
@@ -272,7 +286,9 @@ export default function SignUpPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="documentNumber" className={labelClassName}>Número de documento</Label>
+                    <Label htmlFor="documentNumber" className={labelClassName}>
+                      Número de documento
+                    </Label>
                     <Input
                       id="documentNumber"
                       type="text"
@@ -287,7 +303,9 @@ export default function SignUpPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone" className={labelClassName}>Teléfono (Opcional)</Label>
+                  <Label htmlFor="phone" className={labelClassName}>
+                    Teléfono (Opcional)
+                  </Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -299,7 +317,9 @@ export default function SignUpPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="address" className={labelClassName}>Dirección (Opcional)</Label>
+                  <Label htmlFor="address" className={labelClassName}>
+                    Dirección (Opcional)
+                  </Label>
                   <Input
                     id="address"
                     type="text"
@@ -311,7 +331,9 @@ export default function SignUpPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="password" className={labelClassName}>Contraseña</Label>
+                  <Label htmlFor="password" className={labelClassName}>
+                    Contraseña
+                  </Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -335,7 +357,9 @@ export default function SignUpPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="confirmPassword" className={labelClassName}>Confirmar contraseña</Label>
+                  <Label htmlFor="confirmPassword" className={labelClassName}>
+                    Confirmar contraseña
+                  </Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -376,10 +400,7 @@ export default function SignUpPage() {
 
               <p className="mt-6 text-center text-sm text-gray-600">
                 ¿Ya tienes una cuenta?{' '}
-                <a
-                  href="/signin"
-                  className="font-medium text-green-600 hover:text-green-500"
-                >
+                <a href="/signin" className="font-medium text-green-600 hover:text-green-500">
                   Inicia sesión
                 </a>
               </p>

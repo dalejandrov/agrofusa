@@ -1,10 +1,8 @@
-// components/dashboard/DashboardPage.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import { useSession, signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { Thermometer, Droplet, SunMedium, Wind } from 'lucide-react'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { DashboardHeader } from '@/components/dashboard/Header'
@@ -34,21 +32,30 @@ export type EventRecord = {
   radiation: number
 }
 
+// Instead of using `any`, create a small interface for errors thrown by fetcher
+interface FetchError extends Error {
+  info?: unknown
+  status?: number
+}
+
 const fetcher = async (url: string) => {
   const res = await fetch(url)
+
   if (!res.ok) {
-    const error: any = new Error('Error al obtener datos')
+    // Create a proper FetchError rather than `const error: any = ...`
+    const error = new Error('Error al obtener datos') as FetchError
     error.info = await res.json()
     error.status = res.status
     throw error
   }
+
   return res.json()
 }
 
 export default function DashboardPage() {
   // Authentication
   const { data: session, status } = useSession()
-  const router = useRouter()
+  // → Removed `const router = useRouter()` and its import, since `router` was never used.
 
   // Date range: last 7 days
   const today = new Date()
@@ -129,14 +136,8 @@ export default function DashboardPage() {
                 ) : !stations.length ? (
                   <Skeleton className="h-10 w-40" />
                 ) : (
-                  <Select
-                    value={stationId}
-                    onValueChange={setStationId}
-                  >
-                    <SelectTrigger
-                      id="station"
-                      className="w-40"
-                    >
+                  <Select value={stationId} onValueChange={setStationId}>
+                    <SelectTrigger id="station" className="w-40">
                       <SelectValue placeholder="Seleccione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -159,9 +160,7 @@ export default function DashboardPage() {
                     id="from"
                     type="date"
                     value={startDate}
-                    onChange={(e) =>
-                      setStartDate(e.target.value)
-                    }
+                    onChange={(e) => setStartDate(e.target.value)}
                     className="w-full sm:w-36"
                   />
                 </div>
@@ -173,9 +172,7 @@ export default function DashboardPage() {
                     id="to"
                     type="date"
                     value={endDate}
-                    onChange={(e) =>
-                      setEndDate(e.target.value)
-                    }
+                    onChange={(e) => setEndDate(e.target.value)}
                     className="w-full sm:w-36"
                   />
                 </div>
@@ -206,37 +203,27 @@ export default function DashboardPage() {
                 {/* Temperature */}
                 <Card>
                   <CardHeader className="flex justify-between items-center">
-                    <CardTitle className="text-sm">
-                      Temperatura
-                    </CardTitle>
+                    <CardTitle className="text-sm">Temperatura</CardTitle>
                     <Thermometer className="h-5 w-5 text-red-500" />
                   </CardHeader>
                   <CardContent className="text-2xl font-bold">
-                    {events[0]?.temperature_dht22?.toFixed(1) ||
-                      '–'}
-                    °C
+                    {events[0]?.temperature_dht22?.toFixed(1) || '–'}°C
                   </CardContent>
                 </Card>
                 {/* Humidity */}
                 <Card>
                   <CardHeader className="flex justify-between items-center">
-                    <CardTitle className="text-sm">
-                      Humedad
-                    </CardTitle>
+                    <CardTitle className="text-sm">Humedad</CardTitle>
                     <Droplet className="h-5 w-5 text-blue-500" />
                   </CardHeader>
                   <CardContent className="text-2xl font-bold">
-                    {events[0]?.humidity_dht22?.toFixed(1) ||
-                      '–'}
-                    %
+                    {events[0]?.humidity_dht22?.toFixed(1) || '–'}%
                   </CardContent>
                 </Card>
                 {/* Radiation */}
                 <Card>
                   <CardHeader className="flex justify-between items-center">
-                    <CardTitle className="text-sm">
-                      Radiación
-                    </CardTitle>
+                    <CardTitle className="text-sm">Radiación</CardTitle>
                     <SunMedium className="h-5 w-5 text-yellow-500" />
                   </CardHeader>
                   <CardContent className="text-2xl font-bold">
@@ -246,14 +233,11 @@ export default function DashboardPage() {
                 {/* Hydrogen */}
                 <Card>
                   <CardHeader className="flex justify-between items-center">
-                    <CardTitle className="text-sm">
-                      H₂ (MQ)
-                    </CardTitle>
+                    <CardTitle className="text-sm">H₂ (MQ)</CardTitle>
                     <Wind className="h-5 w-5 text-green-500" />
                   </CardHeader>
                   <CardContent className="text-2xl font-bold">
-                    {events[0]?.hydrogen_mq?.toFixed(1) ||
-                      '–'}
+                    {events[0]?.hydrogen_mq?.toFixed(1) || '–'}
                   </CardContent>
                 </Card>
               </div>
@@ -277,14 +261,8 @@ export default function DashboardPage() {
                 </Alert>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Chart
-                    title="Temp. & Hum."
-                    apiUrl={apiUrl}
-                  />
-                  <Chart
-                    title="H₂ & Radiación"
-                    apiUrl={apiUrl}
-                  />
+                  <Chart title="Temp. & Hum." apiUrl={apiUrl} />
+                  <Chart title="H₂ & Radiación" apiUrl={apiUrl} />
                 </div>
               ))}
           </section>

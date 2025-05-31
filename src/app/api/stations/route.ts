@@ -8,8 +8,14 @@ export async function GET() {
     if (error) throw error
     const stations = data.map((s: { id: string }) => ({ id: s.id, name: s.id }))
     return NextResponse.json(stations)
-  } catch (err: any) {
-    console.error('Error al obtener estaciones:', err.message)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === 'string'
+        ? err
+        : 'Unknown error'
+    console.error('Error al obtener estaciones:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
