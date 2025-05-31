@@ -39,11 +39,13 @@ export async function POST(req: Request) {
       { message: 'Usuario creado', userId },
       { status: 201 }
     )
-
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[SIGNUP_ROUTE_ERROR]', err)
+
+    const message = err instanceof Error ? err.message : 'Error interno'
+
     return NextResponse.json(
-      { message: err.message || 'Error interno' },
+      { message },
       { status: 500 }
     )
   }
