@@ -96,31 +96,6 @@ export default function Home() {
         >
           Tu plataforma inteligente para la gestión avanzada de cultivos.
         </motion.p>
-
-        <motion.div
-          variants={buttonVariants}
-          whileHover={{ scale: 1.05, transition: { type: 'spring', stiffness: 250 } }}
-          whileTap={{ scale: 0.95, transition: { type: 'spring', stiffness: 300 } }}
-          className="w-full max-w-xs sm:max-w-none sm:w-auto"
-        >
-          <Link
-            href="/crops"
-            className="
-              inline-block w-full sm:w-auto
-              px-6 py-3 sm:px-8 sm:py-3 md:px-10 md:py-4
-              bg-green-600 text-white
-              text-sm sm:text-base md:text-lg
-              rounded-lg font-semibold
-              hover:bg-green-700
-              transition-colors duration-200 ease-in-out
-              shadow-lg hover:shadow-xl
-              focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50
-              text-center
-            "
-          >
-            Ver Cultivos
-          </Link>
-        </motion.div>
       </motion.div>
     </>
   )

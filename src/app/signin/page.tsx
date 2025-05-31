@@ -37,7 +37,7 @@ export default function SignInPage() {
                 setError(res.error)
             }
         } else {
-            router.push('/crops')
+            router.push('/dashboard')
         }
     }
 

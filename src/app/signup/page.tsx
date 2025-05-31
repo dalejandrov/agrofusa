@@ -156,8 +156,8 @@ export default function SignUpPage() {
         return; // Stop further execution in this function
       }
 
-      // 3) Redirect to crops on successful login
-      router.push('/crops')
+      // 3) Redirect to dashboard on successful login
+      router.push('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Ocurrió un error inesperado.')
     } finally {

@@ -7,5 +7,14 @@ export default withAuth({
 })
 
 export const config = {
-  matcher: ['/crops'], 
+  matcher: [
+    '/dashboard/:path*',
+    '/crops/:path*',
+    '/stations/:path*',
+    '/producers/:path*',
+    '/users/:path*',
+    '/farms/:path*',
+    '/profile',
+    '/roles',
+  ],
 }
